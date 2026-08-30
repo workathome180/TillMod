@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TillMod — Square to QuickBooks, ready to import</title>
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16.png') }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='favicon-192.png') }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+<style>
+  :root {
+    --font: 'Palatino Linotype', 'Book Antiqua', Palatino, 'URW Palladio L', 'Palatino LT STD', Georgia, serif;
+    --paper: #EDEBE2;
+    --paper-raised: #F5F3EA;
+    --ink: #1F2421;
+    --ink-soft: #4A4F49;
+    --ledger-green: #1B4D3E;
+    --ledger-green-light: #EAF0EC;
+    --stamp-red: #A13D2C;
+    --cta-blue: #2D7DA6;
+    --cta-blue-hover: #205C7C;
+    --rule: #C9C2AE;
+    --rule-strong: #A9A18A;
+    --radius-lg: 20px;
+    --radius-md: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(31,36,33,0.16) 1px, transparent 0) 0 0/4px 4px,
+      radial-gradient(circle at 3px 3px, rgba(31,36,33,0.10) 1.2px, transparent 0) 0 0/7px 7px,
+      var(--paper);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.6;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+
+  .view-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    gap: 2px;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    padding: 4px;
+    z-index: 1000;
+    box-shadow: 0 3px 8px rgba(20, 40, 50, 0.15);
+  }
+
+  .view-btn {
+    border: none;
+    background: none;
+    font-size: 16px;
+    line-height: 1;
+    padding: 7px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .view-btn.active {
+    background: var(--cta-blue);
+    color: var(--paper);
+  }
+
+  #phone-frame {
+    display: none;
+    justify-content: center;
+    padding: 80px 24px;
+  }
+
+  .phone-shell {
+    width: 390px;
+    height: 844px;
+    background: #000;
+    border-radius: 44px;
+    padding: 14px;
+    box-shadow: 0 20px 40px rgba(20, 40, 50, 0.35);
+  }
+
+  .phone-shell iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 30px;
+    background: var(--paper);
+  }
+
+  body.phone-view .wrap { display: none; }
+  body.phone-view #phone-frame { display: flex; }
+
+  header.hero {
+    margin-bottom: 48px;
+  }
+
+  header.hero {
+    position: relative;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent 25px,
+      var(--rule-strong) 26px
+    );
+    background-position: 0 8px;
+  }
+  header.hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(to bottom, var(--paper) 0%, rgba(237,235,226,0) 60%, var(--paper) 100%);
+    pointer-events: none;
+  }
+
+  h1 .brand-kicker {
+    font-style: italic;
+    color: var(--ledger-green);
+    text-decoration: underline;
+  }
+
+  .hero-icon { margin-bottom: 20px; text-align: center; }
+  .hero-icon svg { display: inline-block; max-width: 100%; height: auto; }
+
+  h1 {
+    font-weight: 700;
+    font-size: clamp(28px, 5vw, 42px);
+    line-height: 1.18;
+    margin: 0 0 16px;
+  }
+
+  .sub {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 52ch;
+    margin: 0;
+  }
+
+  /* --- Signature element: the ledger transformation strip --- */
+  .pain-points {
+    margin-bottom: 40px;
+  }
+
+  .pain-points h2 {
+    font-size: 15px;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin: 0 0 12px;
+    font-weight: 400;
+  }
+
+  .pain-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pain-list li {
+    position: relative;
+    padding: 10px 0 10px 30px;
+    border-bottom: 1px dotted var(--rule);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .pain-list li:last-child { border-bottom: none; }
+
+  .pain-list li::before {
+    content: '✗';
+    position: absolute;
+    left: 2px;
+    top: 10px;
+    color: var(--stamp-red);
+    font-weight: 700;
+  }
+
+  .ledger-strip {
+    position: relative;
+    margin: 44px 0 40px;
+    border: 1px solid #000;
+    background: var(--paper-raised);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  .ledger-strip::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: #000;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .ledger-strip .row {
+    display: grid;
+    grid-template-columns: 1fr 32px 1fr;
+    align-items: center;
+    font-size: 14px;
+  }
+
+  .ledger-strip .row + .row {
+    border-top: 1px solid #000;
+  }
+
+  .ledger-strip .label-row {
+    font-size: 16px;
+    font-style: italic;
+    grid-template-columns: 1fr 2px 1fr;
+  }
+
+  .ledger-strip .label-row .label-cell {
+    background: var(--stamp-red);
+    color: var(--paper);
+    padding: 8px 16px;
+    text-align: center;
+  }
+
+  .ledger-strip .label-row .label-divider {
+    background: #000;
+  }
+
+  .ledger-strip .label-row .label-cell-qbo {
+    background: #1F5A78;
+  }
+
+  .ledger-strip .cell {
+    padding: 12px 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ledger-strip .cell.before { color: var(--ink-soft); }
+  .ledger-strip .cell.after {
+    color: var(--ledger-green);
+    font-weight: 700;
+    background: var(--ledger-green-light);
+  }
+
+  .arrow {
+    text-align: center;
+    color: var(--rule-strong);
+    font-size: 16px;
+  }
+
+  /* --- Upload zone --- */
+  .dropzone {
+    display: block;
+    border: 2px solid var(--rule-strong);
+    background: var(--paper-raised);
+    border-radius: var(--radius-lg);
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .dropzone:hover, .dropzone.drag {
+    border-color: var(--ledger-green);
+    background: var(--ledger-green-light);
+  }
+
+  .dropzone input { display: none; }
+
+  .dropzone .instructions {
+    font-size: 15px;
+    color: var(--ink-soft);
+  }
+
+  .dropzone .filename {
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .email-label {
+    display: block;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+
+  #balance-note {
+    font-style: normal;
+    color: var(--ledger-green);
+  }
+
+  .email-input {
+    display: block;
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid var(--rule-strong);
+    border-radius: var(--radius-lg);
+    background: var(--paper-raised);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 15px;
+    margin-bottom: 0;
+  }
+
+  .email-input::placeholder {
+    color: var(--ink-soft);
+  }
+
+  .email-input:focus {
+    outline: none;
+    border-color: var(--ledger-green);
+  }
+
+  .verify-btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 24px;
+    background: linear-gradient(180deg, #2E8368 0%, var(--ledger-green) 55%, #123A2E 100%);
+    color: var(--paper);
+    border: none;
+    border-bottom: 3px solid #0C271F;
+    border-radius: 999px;
+    font-family: var(--font);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(20, 40, 30, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.08s ease;
+  }
+
+  .verify-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #35946F 0%, #1F5C4A 55%, #0F2E24 100%);
+    transform: scale(1.05);
+    box-shadow: 0 6px 11px rgba(20, 40, 30, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  .verify-btn:active:not(:disabled) {
+    transform: scale(1.01) translateY(2px);
+    border-bottom-width: 1px;
+    box-shadow: 0 1px 2px rgba(20, 40, 30, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .verify-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  #code-row { margin-top: 14px; }
+
+  .verify-links {
+    margin-top: 8px;
+    font-size: 13px;
+  }
+
+  .verify-links a {
+    color: var(--cta-blue);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  #verified-row {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--ledger-green);
+  }
+
+  #verified-row a {
+    color: var(--ink-soft);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 13px;
+    margin-left: 6px;
+  }
+
+  .privacy-note {
+    font-size: 12.5px;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  .export-help {
+    margin-bottom: 14px;
+    font-size: 13.5px;
+  }
+
+  .export-help summary {
+    cursor: pointer;
+    color: var(--ledger-green);
+    font-style: italic;
+    list-style: none;
+  }
+  .export-help summary::-webkit-details-marker { display: none; }
+  .export-help summary::before {
+    content: '▸ ';
+  }
+  .export-help[open] summary::before {
+    content: '▾ ';
+  }
+  .export-help summary:hover { text-decoration: underline; }
+
+  .export-help ol {
+    margin: 8px 0 0;
+    padding-left: 20px;
+    color: var(--ink-soft);
+  }
+  .export-help li { margin-bottom: 4px; }
+
+  #email-status {
+    margin-top: 8px;
+    font-size: 13px;
+  }
+
+  #email-status.error { color: var(--stamp-red); }
+
+  #post-verify-section.locked {
+    opacity: 0.4;
+    pointer-events: none;
+    filter: grayscale(0.4);
+  }
+
+  .keep-original-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 13px;
+    font-style: italic;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  .keep-original-row input[type="checkbox"] {
+    margin-top: 2px;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--ledger-green);
+    flex-shrink: 0;
+  }
+
+  .keep-original-row label {
+    cursor: pointer;
+  }
+
+  .buy-btn {
+    margin-top: 10px;
+    width: 120px;
+    padding: 9px 0;
+    background: linear-gradient(180deg, #3D93C4 0%, var(--cta-blue) 55%, var(--cta-blue-hover) 100%);
+    border: none;
+    border-bottom: 3px solid #133C4F;
+    border-radius: 999px;
+    color: var(--paper);
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(20, 40, 50, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.08s ease;
+  }
+
+  .buy-btn:hover {
+    background: linear-gradient(180deg, #3585B3 0%, var(--cta-blue-hover) 55%, #163f52 100%);
+    transform: scale(1.08);
+    box-shadow: 0 6px 12px rgba(20, 40, 50, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .buy-btn:active {
+    transform: scale(1.02) translateY(2px);
+    border-bottom-width: 1px;
+    box-shadow: 0 1px 2px rgba(20, 40, 50, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .buy-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  button.convert-btn {
+    display: block;
+    width: fit-content;
+    margin: 28px auto 40px;
+    padding: 12px 32px;
+    background: linear-gradient(180deg, #3D93C4 0%, var(--cta-blue) 55%, var(--cta-blue-hover) 100%);
+    color: var(--paper);
+    border: none;
+    border-bottom: 4px solid #133C4F;
+    border-radius: 999px;
+    font-family: var(--font);
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 5px 10px rgba(20, 40, 50, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.08s ease;
+  }
+
+  button.convert-btn:hover {
+    background: linear-gradient(180deg, #3585B3 0%, var(--cta-blue-hover) 55%, #163f52 100%);
+    transform: scale(1.06);
+    box-shadow: 0 7px 14px rgba(20, 40, 50, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  button.convert-btn:active {
+    transform: scale(1.01) translateY(2px);
+    border-bottom-width: 2px;
+    box-shadow: 0 1px 3px rgba(20, 40, 50, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  button.convert-btn:disabled {
+    background: linear-gradient(180deg, #3D93C4 0%, var(--cta-blue) 55%, var(--cta-blue-hover) 100%);
+    cursor: not-allowed;
+    box-shadow: none;
+    border-bottom-color: #133C4F;
+  }
+
+  #status {
+    margin-top: 16px;
+    font-size: 14px;
+  }
+
+  #status.error { color: var(--stamp-red); }
+  #status.success { color: var(--ledger-green); }
+
+  #warnings {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    white-space: pre-line;
+  }
+
+  /* --- Pricing --- */
+  .pricing {
+    margin-top: 64px;
+    border-top: 1px solid var(--rule-strong);
+    padding-top: 32px;
+  }
+
+  .pricing h2 {
+    font-size: 15px;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin: 0 0 20px;
+    font-weight: 400;
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto auto auto auto;
+    gap: 20px;
+  }
+
+  .tally-row {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 4;
+    align-items: center;
+    justify-items: center;
+    text-align: center;
+    gap: 4px;
+    padding: 28px 16px;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-md);
+    background: var(--paper-raised);
+  }
+
+  .tally-row .plan-name {
+    font-weight: 700;
+    font-size: 17px;
+    align-self: end;
+  }
+
+  .tally-row .plan-desc {
+    font-size: 14px;
+    color: var(--ink-soft);
+    align-self: start;
+  }
+
+  .tally-row .price {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ledger-green);
+    white-space: nowrap;
+  }
+
+  footer.spec-note {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    font-size: 13px;
+    font-style: italic;
+    color: var(--ink-soft);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 480px) {
+    .ledger-strip .row { grid-template-columns: 1fr 20px 1fr; font-size: 12px; }
+    .ledger-strip .label-row { grid-template-columns: 1fr 2px 1fr; }
+    .ledger-strip .cell { padding: 10px 8px; }
+    .pricing-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="view-toggle" id="view-toggle">
+  <button type="button" class="view-btn active" data-view="desktop" aria-label="Desktop view">🖥️</button>
+  <button type="button" class="view-btn" data-view="phone" aria-label="Phone view">📱</button>
+</div>
+
+<div class="wrap" id="wrap">
+
+  <header class="hero">
+    <div class="hero-icon" aria-hidden="true">
+      <svg viewBox="0 40 100 26" width="405" height="105">
+        <g transform="translate(2,29) scale(1.38)">
+          <path d="M2,12 L2,24 L28,24 L28,13 L13,13 L10,10 L2,10 Z" fill="#C98077" stroke="#000000" stroke-width="0.4" stroke-linejoin="round"/>
+          <text x="15" y="20" font-family="'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif" font-size="3.4" font-weight="700" fill="#FFFFFF" stroke="#000000" stroke-width="0.4" paint-order="stroke fill" text-anchor="middle">Square</text>
+        </g>
+        <g transform="translate(58,29) scale(1.38)">
+          <path d="M2,12 L2,24 L28,24 L28,13 L13,13 L10,10 L2,10 Z" fill="#6FA3B8" stroke="#000000" stroke-width="0.4" stroke-linejoin="round"/>
+          <text x="15" y="20" font-family="'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif" font-size="3.4" font-weight="700" fill="#FFFFFF" stroke="#000000" stroke-width="0.4" paint-order="stroke fill" text-anchor="middle">QuickBooks</text>
+        </g>
+        <path d="M42,54 L51,54 L51,50.5 L59,55 L51,59.5 L51,56 L42,56 Z" fill="#C98077" stroke="#000000" stroke-width="0.4" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1><em class="brand-kicker">TillMod:</em> Your Square export.<br>QuickBooks-ready in one drop!</h1>
+    <p class="sub">QuickBooks Online rejects most bank CSVs on the first try. This turns a raw Square Transactions export into the exact 3-column format QBO accepts — no remapping, no cleanup.</p>
+  </header>
+
+  <div class="pain-points">
+    <h2>Sound familiar?</h2>
+    <ul class="pain-list">
+      <li>QuickBooks Online rejects the raw Square export on the first try — wrong columns, wrong format, no useful error message.</li>
+      <li>Rebuilding the file by hand in Excel or Sheets, row by row, every single month.</li>
+      <li>Figuring out which Square column is the "real" amount — Gross Sales? Fees? Net Total? — and getting it wrong.</li>
+      <li>Remembering that Square stores fees as negative numbers, throwing off a manual Net calculation.</li>
+      <li>Stripping out currency symbols, thousands commas, and stray quote marks that make QBO choke.</li>
+      <li>Merging Square's separate event-type and transaction-ID fields into one clean description without breaking the import.</li>
+      <li>Splitting a big export into smaller files because QBO caps the row count per upload.</li>
+      <li>Second-guessing the numbers afterward, since one mistyped decimal throws off the whole ledger.</li>
+    </ul>
+  </div>
+
+  <div class="ledger-strip">
+    <div class="row label-row">
+      <div class="label-cell">Square export</div>
+      <div class="label-divider"></div>
+      <div class="label-cell label-cell-qbo">QBO import file</div>
+    </div>
+    <div class="row">
+      <div class="cell before">2026-07-05,11:45:00,PDT,3KM192810C1122334,...,242.50,Payment,Complete</div>
+      <div class="arrow">→</div>
+      <div class="cell after">07/05/2026,Payment 3KM192810C1122334,242.50</div>
+    </div>
+  </div>
+
+  <form id="convert-form" style="margin-top: 44px;">
+    <label for="email-input" class="email-label">Email <span id="balance-note"></span></label>
+    <div class="privacy-note">Used only to verify you and track your credits — never sold, never shared.</div>
+    <input type="email" id="email-input" class="email-input" placeholder="you@example.com" required />
+    <button type="button" class="verify-btn" id="send-code-btn">Send code</button>
+
+    <div id="code-row" style="display:none;">
+      <label for="code-input" class="email-label">6-digit code</label>
+      <input type="text" id="code-input" class="email-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" />
+      <button type="button" class="verify-btn" id="verify-code-btn">Verify</button>
+      <div class="verify-links">
+        <a id="resend-code-link">Resend code</a> · <a id="change-email-link">Use a different email</a>
+      </div>
+    </div>
+
+    <div id="verified-row" style="display:none;">
+      ✓ Verified as <strong id="verified-email-display"></strong><a id="switch-email-link">switch</a>
+    </div>
+
+    <div id="email-status"></div>
+
+    <div id="post-verify-section" class="locked">
+      <details class="export-help">
+        <summary>Where do I get this file?</summary>
+        <ol>
+          <li>In your Square Dashboard, go to <strong>Reports → Transactions</strong></li>
+          <li>Click <strong>Export</strong></li>
+          <li>Pick a date range and confirm CSV format</li>
+          <li>Download the CSV — that's the file to drop below</li>
+        </ol>
+      </details>
+
+      <label class="dropzone" id="dropzone" for="file-input">
+        <div class="instructions" id="dz-instructions">Drop your Square Transactions CSV export here, or click to browse</div>
+        <div class="filename" id="filename"></div>
+        <input type="file" id="file-input" accept=".csv" />
+      </label>
+
+      <div class="keep-original-row">
+        <input type="checkbox" id="keep-original-input" />
+        <label for="keep-original-input">Keep a copy of my original file (otherwise it's processed and discarded)</label>
+      </div>
+
+      <button type="submit" class="convert-btn" id="convert-btn" disabled>Convert to QBO format</button>
+    </div>
+    <div id="status"></div>
+    <div id="warnings"></div>
+  </form>
+
+  <div class="pricing">
+    <h2>Pricing</h2>
+    <div class="pricing-grid">
+      <div class="tally-row">
+        <div class="plan-name">Single conversion</div>
+        <div class="plan-desc">One file, pay as you go</div>
+        <div class="price">$14</div>
+        <button class="buy-btn" data-plan="single">Buy</button>
+      </div>
+      <div class="tally-row">
+        <div class="plan-name">10-pack</div>
+        <div class="plan-desc">Credits never expire</div>
+        <div class="price">$29</div>
+        <button class="buy-btn" data-plan="pack10">Buy</button>
+      </div>
+      <div class="tally-row">
+        <div class="plan-name">Unlimited monthly</div>
+        <div class="plan-desc">For bookkeepers doing this weekly</div>
+        <div class="price">$69<span style="font-size:14px;">/mo</span></div>
+        <button class="buy-btn" data-plan="monthly">Subscribe</button>
+      </div>
+    </div>
+    <div id="checkout-status" style="font-size:13px; margin-top:16px; text-align:center;"></div>
+  </div>
+
+  <footer class="spec-note">
+    QBO import spec — Date, Description, Amount · UTF-8 · MM/DD/YYYY · no currency symbols · max ~350KB per upload<br>
+    Files are processed and discarded by default — check "Keep a copy" above to save your original.<br>
+    <a href="/privacy" style="color:inherit;">Privacy Policy</a> · <a href="/terms" style="color:inherit;">Terms of Service</a><br>
+    <span style="font-size:11px;">TillMod is an independent tool, not affiliated with, endorsed by, or sponsored by Square or Intuit. Square and QuickBooks are trademarks of their respective owners.</span>
+  </footer>
+
+</div>
+
+<div id="phone-frame">
+  <div class="phone-shell">
+    <iframe id="phone-iframe" src="/?preview=phone" title="Phone preview"></iframe>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('convert-form');
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('file-input');
+  const filenameEl = document.getElementById('filename');
+  const convertBtn = document.getElementById('convert-btn');
+  const statusEl = document.getElementById('status');
+  const warningsEl = document.getElementById('warnings');
+  const instructions = document.getElementById('dz-instructions');
+  const emailInput = document.getElementById('email-input');
+  const keepOriginalInput = document.getElementById('keep-original-input');
+  const balanceNote = document.getElementById('balance-note');
+  const checkoutStatus = document.getElementById('checkout-status');
+
+  const sendCodeBtn = document.getElementById('send-code-btn');
+  const codeRow = document.getElementById('code-row');
+  const codeInput = document.getElementById('code-input');
+  const verifyCodeBtn = document.getElementById('verify-code-btn');
+  const resendCodeLink = document.getElementById('resend-code-link');
+  const changeEmailLink = document.getElementById('change-email-link');
+  const verifiedRow = document.getElementById('verified-row');
+  const verifiedEmailDisplay = document.getElementById('verified-email-display');
+  const switchEmailLink = document.getElementById('switch-email-link');
+  const emailStatusEl = document.getElementById('email-status');
+  const postVerifySection = document.getElementById('post-verify-section');
+
+  let selectedFile = null;
+  let pendingReceipt = null;
+
+  // --- Email verification -----------------------------------------------------
+  // A verified session is just a signed token in localStorage, scoped to this
+  // browser. Nothing about identity is ever trusted from a plain form field - every
+  // authenticated fetch below sends this token in an Authorization header, and the
+  // server derives "who is this" from it, not from anything the client claims.
+
+  function getToken() { return localStorage.getItem('tillmod_token'); }
+  function getTokenEmail() { return localStorage.getItem('tillmod_token_email'); }
+  function setToken(token, email) {
+    localStorage.setItem('tillmod_token', token);
+    localStorage.setItem('tillmod_token_email', email);
+  }
+  function clearToken() {
+    localStorage.removeItem('tillmod_token');
+    localStorage.removeItem('tillmod_token_email');
+  }
+
+  function authHeaders() {
+    const token = getToken();
+    return token ? { Authorization: 'Bearer ' + token } : {};
+  }
+
+  function showVerified(email) {
+    emailInput.style.display = 'none';
+    sendCodeBtn.style.display = 'none';
+    codeRow.style.display = 'none';
+    verifiedRow.style.display = 'block';
+    verifiedEmailDisplay.textContent = email;
+    postVerifySection.classList.remove('locked');
+  }
+
+  function showEmailEntry() {
+    emailInput.style.display = '';
+    sendCodeBtn.style.display = '';
+    codeRow.style.display = 'none';
+    verifiedRow.style.display = 'none';
+    postVerifySection.classList.add('locked');
+    balanceNote.textContent = '';
+  }
+
+  function showCodeEntry() {
+    codeRow.style.display = 'block';
+    codeInput.value = '';
+    codeInput.focus();
+  }
+
+  async function refreshBalance() {
+    if (!getToken()) { balanceNote.textContent = ''; return; }
+    try {
+      const res = await fetch('/account', { headers: authHeaders() });
+      if (res.status === 401) { handleUnverified(); return; }
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.subscription_active) {
+        balanceNote.textContent = '(unlimited — active subscription)';
+      } else {
+        balanceNote.textContent = `(${data.credits} credit${data.credits === 1 ? '' : 's'} available)`;
+      }
+    } catch (e) { /* silent — balance display is a nicety, not critical */ }
+  }
+
+  function handleUnverified() {
+    // A stored token that the server no longer accepts (expired, or SECRET_KEY
+    // rotated/restarted without one set - see app.py) - fall back to asking again
+    // rather than silently failing every subsequent request.
+    clearToken();
+    showEmailEntry();
+    emailStatusEl.textContent = 'Your verification expired — please verify again.';
+    emailStatusEl.className = 'error';
+  }
+
+  // On load: if this browser already verified an email within the last 30 days,
+  // skip straight to the unlocked form instead of asking again every visit.
+  if (getToken() && getTokenEmail()) {
+    emailInput.value = getTokenEmail();
+    showVerified(getTokenEmail());
+    refreshBalance();
+  } else {
+    showEmailEntry();
+  }
+
+  sendCodeBtn.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    if (!email || !email.includes('@')) {
+      emailStatusEl.textContent = 'Enter a valid email first.';
+      emailStatusEl.className = 'error';
+      emailInput.focus();
+      return;
+    }
+    sendCodeBtn.disabled = true;
+    sendCodeBtn.textContent = 'Sending…';
+    emailStatusEl.textContent = '';
+    emailStatusEl.className = '';
+    try {
+      const res = await fetch('/request-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        emailStatusEl.textContent = 'Error: ' + data.error;
+        emailStatusEl.className = 'error';
+        return;
+      }
+      pendingReceipt = data.receipt;
+      showCodeEntry();
+      emailStatusEl.textContent = `Code sent to ${email} — it expires in 10 minutes.`;
+      emailStatusEl.className = '';
+    } catch (e) {
+      emailStatusEl.textContent = 'Something went wrong: ' + e.message;
+      emailStatusEl.className = 'error';
+    } finally {
+      sendCodeBtn.disabled = false;
+      sendCodeBtn.textContent = 'Send code';
+    }
+  });
+
+  // The form has no submit button and more than one text field, so browsers
+  // silently do nothing on Enter (no implicit submission) - the request never
+  // fires and the field just sits there looking "stuck." Wire Enter up by hand.
+  document.getElementById('convert-form').addEventListener('submit', (e) => e.preventDefault());
+
+  emailInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); sendCodeBtn.click(); }
+  });
+
+  codeInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); verifyCodeBtn.click(); }
+  });
+
+  resendCodeLink.addEventListener('click', (e) => { e.preventDefault(); sendCodeBtn.click(); });
+
+  changeEmailLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    pendingReceipt = null;
+    codeRow.style.display = 'none';
+    emailStatusEl.textContent = '';
+    emailInput.focus();
+  });
+
+  switchEmailLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    clearToken();
+    emailInput.value = '';
+    showEmailEntry();
+    emailInput.focus();
+  });
+
+  verifyCodeBtn.addEventListener('click', async () => {
+    const code = codeInput.value.trim();
+    if (!pendingReceipt || !code) {
+      emailStatusEl.textContent = 'Enter the code from your email.';
+      emailStatusEl.className = 'error';
+      return;
+    }
+    verifyCodeBtn.disabled = true;
+    verifyCodeBtn.textContent = 'Verifying…';
+    try {
+      const res = await fetch('/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ receipt: pendingReceipt, code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        emailStatusEl.textContent = 'Error: ' + data.error;
+        emailStatusEl.className = 'error';
+        return;
+      }
+      setToken(data.token, data.email);
+      pendingReceipt = null;
+      showVerified(data.email);
+      emailStatusEl.textContent = '';
+      emailStatusEl.className = '';
+      refreshBalance();
+    } catch (e) {
+      emailStatusEl.textContent = 'Something went wrong: ' + e.message;
+      emailStatusEl.className = 'error';
+    } finally {
+      verifyCodeBtn.disabled = false;
+      verifyCodeBtn.textContent = 'Verify';
+    }
+  });
+
+  // Buy buttons
+  document.querySelectorAll('.buy-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!getToken()) {
+        checkoutStatus.textContent = 'Verify your email above first, then click Buy.';
+        checkoutStatus.style.color = 'var(--stamp-red)';
+        emailInput.focus();
+        return;
+      }
+      const plan = btn.dataset.plan;
+      btn.disabled = true;
+      checkoutStatus.textContent = 'Redirecting to checkout…';
+      checkoutStatus.style.color = 'var(--ink-soft)';
+      try {
+        const res = await fetch('/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ plan }),
+        });
+        const data = await res.json();
+        if (res.status === 401) { handleUnverified(); btn.disabled = false; return; }
+        if (!res.ok) {
+          checkoutStatus.textContent = 'Error: ' + data.error;
+          checkoutStatus.style.color = 'var(--stamp-red)';
+          btn.disabled = false;
+          return;
+        }
+        window.location.href = data.url;
+      } catch (e) {
+        checkoutStatus.textContent = 'Something went wrong: ' + e.message;
+        checkoutStatus.style.color = 'var(--stamp-red)';
+        btn.disabled = false;
+      }
+    });
+  });
+
+  function setFile(file) {
+    selectedFile = file;
+    if (file) {
+      filenameEl.textContent = file.name;
+      instructions.textContent = 'Selected:';
+      convertBtn.disabled = false;
+    } else {
+      filenameEl.textContent = '';
+      instructions.textContent = 'Drop your Square Transactions CSV export here, or click to browse';
+      convertBtn.disabled = true;
+    }
+    statusEl.textContent = '';
+    statusEl.className = '';
+    warningsEl.textContent = '';
+  }
+
+  fileInput.addEventListener('change', (e) => setFile(e.target.files[0] || null));
+
+  ['dragenter', 'dragover'].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('drag'); })
+  );
+  ['dragleave', 'drop'].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); })
+  );
+  dropzone.addEventListener('drop', (e) => {
+    const file = e.dataTransfer.files[0];
+    if (file) setFile(file);
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!selectedFile) return;
+
+    if (!getToken()) {
+      statusEl.textContent = 'Verify your email above first.';
+      statusEl.className = 'error';
+      return;
+    }
+
+    convertBtn.disabled = true;
+    convertBtn.textContent = 'Converting…';
+    statusEl.textContent = '';
+    statusEl.className = '';
+    warningsEl.textContent = '';
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('keep_original', keepOriginalInput.checked ? 'true' : 'false');
+
+    try {
+      const res = await fetch('/convert', { method: 'POST', headers: authHeaders(), body: formData });
+
+      if (res.status === 401) {
+        handleUnverified();
+        return;
+      }
+
+      if (!res.ok) {
+        const err = await res.json();
+        statusEl.textContent = 'Error: ' + err.error;
+        statusEl.className = 'error';
+        if (res.status === 402) {
+          checkoutStatus.textContent = 'Pick a plan below to keep converting.';
+        }
+        return;
+      }
+
+      const warnings = res.headers.get('X-Conversion-Warnings');
+      if (warnings) {
+        warningsEl.textContent = warnings.split(' | ').map(w => '· ' + w).join('\n');
+      }
+
+      const usedTrial = res.headers.get('X-Free-Trial-Used') === 'true';
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'qbo_import_ready.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      statusEl.textContent = usedTrial
+        ? 'Converted using your free trial credit. Download started.'
+        : 'Converted. Download started — import it into the QBO Banking tab.';
+      statusEl.className = 'success';
+      refreshBalance();
+    } catch (err) {
+      statusEl.textContent = 'Something went wrong: ' + err.message;
+      statusEl.className = 'error';
+    } finally {
+      convertBtn.disabled = false;
+      convertBtn.textContent = 'Convert to QBO format';
+    }
+  });
+
+  // --- Desktop / phone view toggle ---
+  const viewToggle = document.getElementById('view-toggle');
+  const isEmbeddedPreview = new URLSearchParams(window.location.search).get('preview') === 'phone';
+
+  if (isEmbeddedPreview) {
+    // This page instance is the iframe showing the phone preview itself —
+    // hide its own toggle so it isn't shown twice.
+    viewToggle.style.display = 'none';
+  } else {
+    viewToggle.querySelectorAll('.view-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        viewToggle.querySelectorAll('.view-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.body.classList.toggle('phone-view', btn.dataset.view === 'phone');
+      });
+    });
+  }
+</script>
+</body>
+</html>
