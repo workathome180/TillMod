@@ -340,8 +340,9 @@
   }
 
   .verify-btn {
-    display: inline-block;
-    margin-top: 10px;
+    display: block;
+    width: fit-content;
+    margin: 10px auto 0;
     padding: 10px 24px;
     background: linear-gradient(180deg, #2E8368 0%, var(--ledger-green) 55%, #123A2E 100%);
     color: var(--paper);
@@ -694,9 +695,36 @@
 
   <div class="guide-box" id="guide">
     <p class="guide-label">Free guide</p>
-    <p class="guide-desc">Why QBO rejects a raw Square Transactions export, and exactly how to fix it — by hand or in one click.</p>
+    <p class="guide-desc">Why QBO rejects a raw Square Transactions export, and exactly how to fix it in one click.</p>
     <a href="https://digitalbuilds.org/square-to-quickbooks-guide.html" class="verify-btn">Read the guide</a>
   </div>
+
+  <div class="pricing" id="pricing">
+    <h2>Pricing</h2>
+    <div class="pricing-grid">
+      <div class="tally-row">
+        <div class="plan-name">Single conversion</div>
+        <div class="plan-desc">One file, pay as you go</div>
+        <div class="price">$14</div>
+        <button class="buy-btn" data-plan="single">Buy</button>
+      </div>
+      <div class="tally-row">
+        <div class="plan-name">10-pack</div>
+        <div class="plan-desc">Credits never expire</div>
+        <div class="price">$29</div>
+        <button class="buy-btn" data-plan="pack10">Buy</button>
+      </div>
+      <div class="tally-row">
+        <div class="plan-name">Unlimited monthly</div>
+        <div class="plan-desc">For bookkeepers doing this weekly</div>
+        <div class="price">$69<span style="font-size:14px;">/mo</span></div>
+        <button class="buy-btn" data-plan="monthly">Subscribe</button>
+        <div style="font-size:11px; margin-top:6px; opacity:0.75;">Renews monthly · cancel anytime</div>
+      </div>
+    </div>
+    <div id="checkout-status" style="font-size:13px; margin-top:16px; text-align:center;"></div>
+  </div>
+
 
   <div class="ledger-strip">
     <div class="row label-row">
@@ -759,32 +787,6 @@
     <div id="status"></div>
     <div id="warnings"></div>
   </form>
-
-  <div class="pricing" id="pricing">
-    <h2>Pricing</h2>
-    <div class="pricing-grid">
-      <div class="tally-row">
-        <div class="plan-name">Single conversion</div>
-        <div class="plan-desc">One file, pay as you go</div>
-        <div class="price">$14</div>
-        <button class="buy-btn" data-plan="single">Buy</button>
-      </div>
-      <div class="tally-row">
-        <div class="plan-name">10-pack</div>
-        <div class="plan-desc">Credits never expire</div>
-        <div class="price">$29</div>
-        <button class="buy-btn" data-plan="pack10">Buy</button>
-      </div>
-      <div class="tally-row">
-        <div class="plan-name">Unlimited monthly</div>
-        <div class="plan-desc">For bookkeepers doing this weekly</div>
-        <div class="price">$69<span style="font-size:14px;">/mo</span></div>
-        <button class="buy-btn" data-plan="monthly">Subscribe</button>
-        <div style="font-size:11px; margin-top:6px; opacity:0.75;">Renews monthly · cancel anytime</div>
-      </div>
-    </div>
-    <div id="checkout-status" style="font-size:13px; margin-top:16px; text-align:center;"></div>
-  </div>
 
   <footer class="spec-note">
     QBO import spec — Date, Description, Amount · UTF-8 · MM/DD/YYYY · no currency symbols · max ~350KB per upload<br>
@@ -1047,7 +1049,7 @@
   document.querySelectorAll('.buy-btn').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (!getToken()) {
-        checkoutStatus.textContent = 'Verify your email above first, then click Buy.';
+        checkoutStatus.textContent = 'Verify your email first, then click Buy.';
         checkoutStatus.style.color = 'var(--stamp-red)';
         emailInput.focus();
         return;
