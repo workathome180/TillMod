@@ -294,6 +294,29 @@
     color: var(--ledger-green);
   }
 
+  .guide-box {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    margin-bottom: 40px;
+  }
+
+  .guide-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ledger-green);
+    margin: 0 0 6px;
+  }
+
+  .guide-desc {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+  }
+
   .email-input {
     display: block;
     width: 100%;
@@ -669,6 +692,12 @@
     <p class="sub">QuickBooks Online rejects most bank CSVs on the first try. This turns a raw Square Transactions export into the exact 3-column format QBO accepts — no remapping, no cleanup.</p>
   </header>
 
+  <div class="guide-box" id="guide">
+    <p class="guide-label">Free guide</p>
+    <p class="guide-desc">Why QBO rejects a raw Square Transactions export, and exactly how to fix it — by hand or in one click.</p>
+    <a href="https://digitalbuilds.org/square-to-quickbooks-guide.html" class="verify-btn">Read the guide</a>
+  </div>
+
   <div class="ledger-strip">
     <div class="row label-row">
       <div class="label-cell">Square export</div>
@@ -731,7 +760,7 @@
     <div id="warnings"></div>
   </form>
 
-  <div class="pricing">
+  <div class="pricing" id="pricing">
     <h2>Pricing</h2>
     <div class="pricing-grid">
       <div class="tally-row">
