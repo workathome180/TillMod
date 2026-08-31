@@ -176,42 +176,6 @@
   }
 
   /* --- Signature element: the ledger transformation strip --- */
-  .pain-points {
-    margin-bottom: 40px;
-  }
-
-  .pain-points h2 {
-    font-size: 15px;
-    font-style: italic;
-    color: var(--ink-soft);
-    margin: 0 0 12px;
-    font-weight: 400;
-  }
-
-  .pain-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .pain-list li {
-    position: relative;
-    padding: 10px 0 10px 30px;
-    border-bottom: 1px dotted var(--rule);
-    font-size: 15px;
-    line-height: 1.5;
-  }
-
-  .pain-list li:last-child { border-bottom: none; }
-
-  .pain-list li::before {
-    content: '✗';
-    position: absolute;
-    left: 2px;
-    top: 10px;
-    color: var(--stamp-red);
-    font-weight: 700;
-  }
 
   .ledger-strip {
     position: relative;
@@ -704,20 +668,6 @@
     <h1><em class="brand-kicker">TillMod:</em> Your Square export.<br>QuickBooks-ready in one drop!</h1>
     <p class="sub">QuickBooks Online rejects most bank CSVs on the first try. This turns a raw Square Transactions export into the exact 3-column format QBO accepts — no remapping, no cleanup.</p>
   </header>
-
-  <div class="pain-points">
-    <h2>Sound familiar?</h2>
-    <ul class="pain-list">
-      <li>QuickBooks Online rejects the raw Square export on the first try — wrong columns, wrong format, no useful error message.</li>
-      <li>Rebuilding the file by hand in Excel or Sheets, row by row, every single month.</li>
-      <li>Figuring out which Square column is the "real" amount — Gross Sales? Fees? Net Total? — and getting it wrong.</li>
-      <li>Remembering that Square stores fees as negative numbers, throwing off a manual Net calculation.</li>
-      <li>Stripping out currency symbols, thousands commas, and stray quote marks that make QBO choke.</li>
-      <li>Merging Square's separate event-type and transaction-ID fields into one clean description without breaking the import.</li>
-      <li>Splitting a big export into smaller files because QBO caps the row count per upload.</li>
-      <li>Second-guessing the numbers afterward, since one mistyped decimal throws off the whole ledger.</li>
-    </ul>
-  </div>
 
   <div class="ledger-strip">
     <div class="row label-row">
