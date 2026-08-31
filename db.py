@@ -83,6 +83,15 @@ def get_or_create_user(email: str) -> sqlite3.Row:
         return row
 
 
+def get_stripe_customer_id(email: str):
+    email = email.strip().lower()
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT stripe_customer_id FROM users WHERE email = ?", (email,)
+        ).fetchone()
+        return row["stripe_customer_id"] if row else None
+
+
 def has_subscription(email: str) -> bool:
     email = email.strip().lower()
     with get_conn() as conn:

@@ -376,6 +376,12 @@
     cursor: pointer;
   }
 
+  #manage-sub-link {
+    color: var(--cta-blue);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
   #verified-row {
     margin-top: 10px;
     font-size: 14px;
@@ -565,14 +571,14 @@
   .pricing-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto auto auto auto;
     gap: 20px;
   }
 
   .tally-row {
     display: grid;
     grid-template-rows: subgrid;
-    grid-row: span 4;
+    grid-row: span 5;
     align-items: center;
     justify-items: center;
     text-align: center;
@@ -679,7 +685,7 @@
   </div>
 
   <form id="convert-form" style="margin-top: 44px;">
-    <label for="email-input" class="email-label">Email <span id="balance-note"></span></label>
+    <label for="email-input" class="email-label">Email <span id="balance-note"></span><a id="manage-sub-link" style="display:none; margin-left:8px; font-size:12px;">Manage subscription</a></label>
     <div class="privacy-note">Used only to verify you and track your credits — never sold, never shared.</div>
     <input type="email" id="email-input" class="email-input" placeholder="you@example.com" required />
     <button type="button" class="verify-btn" id="send-code-btn">Send code</button>
@@ -747,6 +753,7 @@
         <div class="plan-desc">For bookkeepers doing this weekly</div>
         <div class="price">$69<span style="font-size:14px;">/mo</span></div>
         <button class="buy-btn" data-plan="monthly">Subscribe</button>
+        <div style="font-size:11px; margin-top:6px; opacity:0.75;">Renews monthly · cancel anytime</div>
       </div>
     </div>
     <div id="checkout-status" style="font-size:13px; margin-top:16px; text-align:center;"></div>
@@ -780,6 +787,7 @@
   const keepOriginalInput = document.getElementById('keep-original-input');
   const balanceNote = document.getElementById('balance-note');
   const checkoutStatus = document.getElementById('checkout-status');
+  const manageSubLink = document.getElementById('manage-sub-link');
 
   const sendCodeBtn = document.getElementById('send-code-btn');
   const codeRow = document.getElementById('code-row');
@@ -834,6 +842,7 @@
     verifiedRow.style.display = 'none';
     postVerifySection.classList.add('locked');
     balanceNote.textContent = '';
+    manageSubLink.style.display = 'none';
   }
 
   function showCodeEntry() {
@@ -851,11 +860,37 @@
       const data = await res.json();
       if (data.subscription_active) {
         balanceNote.textContent = '(unlimited — active subscription)';
+        manageSubLink.style.display = '';
       } else {
         balanceNote.textContent = `(${data.credits} credit${data.credits === 1 ? '' : 's'} available)`;
+        manageSubLink.style.display = 'none';
       }
     } catch (e) { /* silent — balance display is a nicety, not critical */ }
   }
+
+  manageSubLink.addEventListener('click', async () => {
+    if (!getToken()) return;
+    manageSubLink.textContent = 'Loading…';
+    try {
+      const res = await fetch('/create-billing-portal-session', {
+        method: 'POST',
+        headers: authHeaders(),
+      });
+      const data = await res.json();
+      if (res.status === 401) { handleUnverified(); return; }
+      if (!res.ok) {
+        checkoutStatus.textContent = 'Error: ' + data.error;
+        checkoutStatus.style.color = 'var(--stamp-red)';
+        return;
+      }
+      window.location.href = data.url;
+    } catch (e) {
+      checkoutStatus.textContent = 'Something went wrong: ' + e.message;
+      checkoutStatus.style.color = 'var(--stamp-red)';
+    } finally {
+      manageSubLink.textContent = 'Manage subscription';
+    }
+  });
 
   function handleUnverified() {
     // A stored token that the server no longer accepts (expired, or SECRET_KEY

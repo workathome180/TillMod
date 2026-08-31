@@ -438,6 +438,23 @@ def create_checkout_session(email):
     return jsonify({"url": session.url})
 
 
+@app.route("/create-billing-portal-session", methods=["POST"])
+@verified_email_required
+def create_billing_portal_session(email):
+    if not STRIPE_SECRET_KEY:
+        return jsonify({"error": "Stripe is not configured on this server yet."}), 501
+
+    customer_id = db.get_stripe_customer_id(email)
+    if not customer_id:
+        return jsonify({"error": "No subscription found for this account."}), 404
+
+    session = stripe.billing_portal.Session.create(
+        customer=customer_id,
+        return_url=request.host_url,
+    )
+    return jsonify({"url": session.url})
+
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
     if not STRIPE_SECRET_KEY or not STRIPE_WEBHOOK_SECRET:
