@@ -668,16 +668,37 @@
 
   <header class="hero">
     <div class="hero-icon" aria-hidden="true">
-      <svg viewBox="0 40 100 26" width="405" height="105">
-        <g transform="translate(2,29) scale(1.38)">
-          <path d="M2,12 L2,24 L28,24 L28,13 L13,13 L10,10 L2,10 Z" fill="#C98077" stroke="#000000" stroke-width="0.4" stroke-linejoin="round"/>
-          <text x="15" y="20" font-family="'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif" font-size="3.4" font-weight="700" fill="#FFFFFF" stroke="#000000" stroke-width="0.4" paint-order="stroke fill" text-anchor="middle">Square</text>
+      <svg viewBox="0 0 200 70" width="405" height="142">
+        <defs>
+          <linearGradient id="grad-salmon" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#E4AB9D"/>
+            <stop offset="100%" stop-color="#B0674F"/>
+          </linearGradient>
+          <linearGradient id="grad-blue" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#93C5DB"/>
+            <stop offset="100%" stop-color="#4E7F97"/>
+          </linearGradient>
+          <filter id="button-shadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="1.5" stdDeviation="1.4" flood-color="#1F2421" flood-opacity="0.32"/>
+          </filter>
+        </defs>
+
+        <g filter="url(#button-shadow)">
+          <rect x="4" y="16" width="78" height="38" rx="9" fill="url(#grad-salmon)" stroke="#8A4E3C" stroke-width="0.6"/>
+          <rect x="8" y="19" width="70" height="12" rx="6" fill="#FFFFFF" opacity="0.28"/>
+          <text x="43" y="40" font-family="'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif" font-size="12" font-weight="700" fill="#FFFFFF" stroke="#000000" stroke-width="0.9" paint-order="stroke fill" text-anchor="middle">Square</text>
         </g>
-        <g transform="translate(58,29) scale(1.38)">
-          <path d="M2,12 L2,24 L28,24 L28,13 L13,13 L10,10 L2,10 Z" fill="#6FA3B8" stroke="#000000" stroke-width="0.4" stroke-linejoin="round"/>
-          <text x="15" y="20" font-family="'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif" font-size="3.4" font-weight="700" fill="#FFFFFF" stroke="#000000" stroke-width="0.4" paint-order="stroke fill" text-anchor="middle">QuickBooks</text>
+
+        <g filter="url(#button-shadow)">
+          <rect x="118" y="16" width="78" height="38" rx="9" fill="url(#grad-blue)" stroke="#3D6577" stroke-width="0.6"/>
+          <rect x="122" y="19" width="70" height="12" rx="6" fill="#FFFFFF" opacity="0.28"/>
+          <text x="157" y="40" font-family="'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif" font-size="10" font-weight="700" fill="#FFFFFF" stroke="#000000" stroke-width="0.9" paint-order="stroke fill" text-anchor="middle">QuickBooks</text>
         </g>
-        <path d="M42,54 L51,54 L51,50.5 L59,55 L51,59.5 L51,56 L42,56 Z" fill="#C98077" stroke="#000000" stroke-width="0.4" stroke-linejoin="round"/>
+
+        <g filter="url(#button-shadow)">
+          <rect x="89" y="33.5" width="16" height="3" fill="#000000"/>
+          <path d="M100,29 L112,35 L100,41 Z" fill="#000000" stroke-linejoin="round"/>
+        </g>
       </svg>
     </div>
     <h1><em class="brand-kicker">TillMod:</em> Your Square export.<br>QuickBooks-ready in one drop!</h1>
