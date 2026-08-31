@@ -47,6 +47,31 @@
     padding: 64px 24px 96px;
   }
 
+  .home-link {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    display: inline-flex;
+    align-items: center;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    padding: 9px 16px;
+    font-family: var(--font);
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    z-index: 1000;
+    box-shadow: 0 3px 8px rgba(20, 40, 50, 0.15);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .home-link:hover {
+    background: var(--cta-blue);
+    color: #fff;
+    border-color: var(--cta-blue);
+  }
+
   .view-toggle {
     position: fixed;
     top: 16px;
@@ -631,6 +656,8 @@
 </style>
 </head>
 <body>
+
+<a class="home-link" href="https://digitalbuilds.org">&larr; DigitalBuilds.org</a>
 
 <div class="view-toggle" id="view-toggle">
   <button type="button" class="view-btn active" data-view="desktop" aria-label="Desktop view">🖥️</button>
