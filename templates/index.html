@@ -602,14 +602,18 @@
   .pricing-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto auto auto auto auto;
+    grid-template-rows: auto auto auto auto auto auto;
     gap: 20px;
+  }
+
+  .footnote-star {
+    color: var(--stamp-red);
   }
 
   .tally-row {
     display: grid;
     grid-template-rows: subgrid;
-    grid-row: span 5;
+    grid-row: span 6;
     align-items: center;
     justify-items: center;
     text-align: center;
@@ -742,11 +746,12 @@
         <button class="buy-btn" data-plan="pack10">Buy</button>
       </div>
       <div class="tally-row">
-        <div class="plan-name">Unlimited monthly</div>
+        <div class="plan-name">Unlimited monthly<span class="footnote-star">*</span></div>
         <div class="plan-desc">For bookkeepers doing this weekly</div>
         <div class="price">$69<span style="font-size:14px;">/mo</span></div>
         <button class="buy-btn" data-plan="monthly">Subscribe</button>
         <div style="font-size:11px; margin-top:6px; opacity:0.75;">Renews monthly · cancel anytime</div>
+        <div style="font-size:11px; margin-top:4px;"><span class="footnote-star">*</span>Get a free ledger and categorization workbook for your platform when you order a monthly subscription</div>
       </div>
     </div>
     <div id="checkout-status" style="font-size:13px; margin-top:16px; text-align:center;"></div>
