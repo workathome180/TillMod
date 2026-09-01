@@ -108,6 +108,13 @@ PRICE_IDS = {
 
 PLAN_CREDITS = {"single": 1, "pack10": 10}  # monthly grants a subscription, not credits
 
+# A free perk for active monthly subscribers, gated in /gift-workbook below by the same
+# has_subscription() check /account uses. Lives in its own folder (not app.static_folder),
+# so - like ORIGINALS_DIR above - there's no URL that reaches it except through that route.
+GIFT_WORKBOOK_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "gifts", "TillMod-Square-Categorization-Cheat-Sheet.xlsx"
+)
+
 FREE_TRIAL_CREDITS = 1
 
 SMTP_HOST = os.environ.get("SMTP_HOST")
@@ -453,6 +460,18 @@ def create_billing_portal_session(email):
         return_url=request.host_url,
     )
     return jsonify({"url": session.url})
+
+
+@app.route("/gift-workbook")
+@verified_email_required
+def gift_workbook(email):
+    if not db.has_subscription(email):
+        return jsonify({"error": "This download is available to active monthly subscribers."}), 403
+    return send_file(
+        GIFT_WORKBOOK_PATH,
+        as_attachment=True,
+        download_name="TillMod-Square-Categorization-Cheat-Sheet.xlsx",
+    )
 
 
 @app.route("/webhook", methods=["POST"])

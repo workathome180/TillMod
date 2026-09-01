@@ -740,7 +740,7 @@
   </div>
 
   <form id="convert-form" style="margin-top: 44px;">
-    <label for="email-input" class="email-label">Email <span id="balance-note"></span><a id="manage-sub-link" style="display:none; margin-left:8px; font-size:12px;">Manage subscription</a></label>
+    <label for="email-input" class="email-label">Email <span id="balance-note"></span><a id="manage-sub-link" style="display:none; margin-left:8px; font-size:12px;">Manage subscription</a><a id="gift-link" href="#" style="display:none; margin-left:8px; font-size:12px;">Download free gift</a></label>
     <div class="privacy-note">Used only to verify you and track your credits — never sold, never shared.</div>
     <input type="email" id="email-input" class="email-input" placeholder="you@example.com" required />
     <button type="button" class="verify-btn" id="send-code-btn">Send code</button>
@@ -817,6 +817,7 @@
   const balanceNote = document.getElementById('balance-note');
   const checkoutStatus = document.getElementById('checkout-status');
   const manageSubLink = document.getElementById('manage-sub-link');
+  const giftLink = document.getElementById('gift-link');
 
   const sendCodeBtn = document.getElementById('send-code-btn');
   const codeRow = document.getElementById('code-row');
@@ -872,6 +873,7 @@
     postVerifySection.classList.add('locked');
     balanceNote.textContent = '';
     manageSubLink.style.display = 'none';
+    giftLink.style.display = 'none';
   }
 
   function showCodeEntry() {
@@ -890,9 +892,11 @@
       if (data.subscription_active) {
         balanceNote.textContent = '(unlimited — active subscription)';
         manageSubLink.style.display = '';
+        giftLink.style.display = '';
       } else {
         balanceNote.textContent = `(${data.credits} credit${data.credits === 1 ? '' : 's'} available)`;
         manageSubLink.style.display = 'none';
+        giftLink.style.display = 'none';
       }
     } catch (e) { /* silent — balance display is a nicety, not critical */ }
   }
@@ -918,6 +922,35 @@
       checkoutStatus.style.color = 'var(--stamp-red)';
     } finally {
       manageSubLink.textContent = 'Manage subscription';
+    }
+  });
+
+  giftLink.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (!getToken()) return;
+    giftLink.textContent = 'Loading…';
+    try {
+      const res = await fetch('/gift-workbook', { headers: authHeaders() });
+      if (res.status === 401) { handleUnverified(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        checkoutStatus.textContent = 'Error: ' + (err.error || 'Could not download gift.');
+        checkoutStatus.style.color = 'var(--stamp-red)';
+        return;
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'TillMod-Square-Categorization-Cheat-Sheet.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      checkoutStatus.textContent = 'Something went wrong: ' + err.message;
+      checkoutStatus.style.color = 'var(--stamp-red)';
+    } finally {
+      giftLink.textContent = 'Download free gift';
     }
   });
 
