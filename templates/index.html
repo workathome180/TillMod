@@ -14,6 +14,7 @@
     --font: 'Palatino Linotype', 'Book Antiqua', Palatino, 'URW Palladio L', 'Palatino LT STD', Georgia, serif;
     --paper: #EDEBE2;
     --paper-raised: #F5F3EA;
+    --legal-pad-yellow: #F7EFC9;
     --ink: #1F2421;
     --ink-soft: #4A4F49;
     --ledger-green: #1B4D3E;
@@ -254,9 +255,18 @@
   .dropzone {
     display: block;
     border: 2px solid var(--rule-strong);
-    background: var(--paper-raised);
+    background:
+      linear-gradient(to right, transparent 26px, rgba(161, 61, 44, 0.35) 26px, rgba(161, 61, 44, 0.35) 27px, transparent 27px),
+      linear-gradient(to right, transparent 30px, rgba(161, 61, 44, 0.35) 30px, rgba(161, 61, 44, 0.35) 31px, transparent 31px),
+      repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 25px,
+        rgba(122, 108, 61, 0.28) 26px
+      ),
+      var(--legal-pad-yellow);
     border-radius: var(--radius-lg);
-    padding: 40px 24px;
+    padding: 40px 24px 40px 40px;
     text-align: center;
     cursor: pointer;
     transition: border-color 0.15s ease, background 0.15s ease;
@@ -320,10 +330,19 @@
   .email-input {
     display: block;
     width: 100%;
-    padding: 12px 14px;
+    padding: 12px 14px 12px 40px;
     border: 2px solid var(--rule-strong);
     border-radius: var(--radius-lg);
-    background: var(--paper-raised);
+    background:
+      linear-gradient(to right, transparent 26px, rgba(161, 61, 44, 0.35) 26px, rgba(161, 61, 44, 0.35) 27px, transparent 27px),
+      linear-gradient(to right, transparent 30px, rgba(161, 61, 44, 0.35) 30px, rgba(161, 61, 44, 0.35) 31px, transparent 31px),
+      repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 25px,
+        rgba(122, 108, 61, 0.28) 26px
+      ),
+      var(--legal-pad-yellow);
     color: var(--ink);
     font-family: var(--font);
     font-size: 15px;
@@ -596,10 +615,19 @@
     justify-items: center;
     text-align: center;
     gap: 4px;
-    padding: 28px 16px;
+    padding: 28px 16px 28px 40px;
     border: 1px solid var(--rule-strong);
     border-radius: var(--radius-md);
-    background: var(--paper-raised);
+    background:
+      linear-gradient(to right, transparent 26px, rgba(161, 61, 44, 0.35) 26px, rgba(161, 61, 44, 0.35) 27px, transparent 27px),
+      linear-gradient(to right, transparent 30px, rgba(161, 61, 44, 0.35) 30px, rgba(161, 61, 44, 0.35) 31px, transparent 31px),
+      repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 25px,
+        rgba(122, 108, 61, 0.28) 26px
+      ),
+      var(--legal-pad-yellow);
   }
 
   .tally-row .plan-name {
