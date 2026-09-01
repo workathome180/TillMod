@@ -760,20 +760,6 @@
   </div>
 
 
-  <p class="guide-label" style="text-align:center;">Example conversion</p>
-  <div class="ledger-strip">
-    <div class="row label-row">
-      <div class="label-cell">Square export</div>
-      <div class="label-divider"></div>
-      <div class="label-cell label-cell-qbo">QBO import file</div>
-    </div>
-    <div class="row">
-      <div class="cell before">2026-07-05,11:45:00,PDT,3KM192810C1122334,...,242.50,Payment,Complete</div>
-      <div class="arrow">→</div>
-      <div class="cell after">07/05/2026,Payment 3KM192810C1122334,242.50</div>
-    </div>
-  </div>
-
   <form id="convert-form" style="margin-top: 44px;">
     <label for="email-input" class="email-label">Email <span id="balance-note"></span><a id="manage-sub-link" style="display:none; margin-left:8px; font-size:12px;">Manage subscription</a><a id="gift-link" href="#" style="display:none; margin-left:8px; font-size:12px;">Download free gift</a></label>
     <div class="privacy-note">Used only to verify you and track your credits — never sold, never shared.</div>
@@ -818,6 +804,20 @@
       </div>
 
       <button type="submit" class="convert-btn" id="convert-btn" disabled>Convert to QBO format</button>
+    </div>
+
+    <p class="guide-label" style="text-align:center; margin-top:32px;">Example conversion</p>
+    <div class="ledger-strip">
+      <div class="row label-row">
+        <div class="label-cell">Square export</div>
+        <div class="label-divider"></div>
+        <div class="label-cell label-cell-qbo">QBO import file</div>
+      </div>
+      <div class="row">
+        <div class="cell before">2026-07-05,11:45:00,PDT,3KM192810C1122334,...,242.50,Payment,Complete</div>
+        <div class="arrow">→</div>
+        <div class="cell after">07/05/2026,Payment 3KM192810C1122334,242.50</div>
+      </div>
     </div>
     <div id="status"></div>
     <div id="warnings"></div>
