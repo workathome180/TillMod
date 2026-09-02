@@ -106,6 +106,15 @@ PRICE_IDS = {
     "monthly": os.environ.get("STRIPE_PRICE_MONTHLY", "price_REPLACE_ME_MONTHLY"),
 }
 
+# Identifies which app a checkout came from. FileMod/ShopMod/TillMod all share one
+# Stripe account, so Stripe broadcasts every webhook event to all three apps'
+# /webhook endpoints, not just the one that created the checkout - this tag is how
+# the webhook below tells "a single/10-pack purchase made on this app" apart from
+# "the same kind of purchase made on a sibling app." The "monthly" plan is the one
+# exception: it's the shared All-Access bundle, so it's meant to activate on all
+# three regardless of which app's checkout the customer used.
+APP_NAME = "tillmod"
+
 PLAN_CREDITS = {"single": 1, "pack10": 10}  # monthly grants a subscription, not credits
 
 # A free perk for active monthly subscribers, gated in /gift-workbook below by the same
@@ -430,7 +439,7 @@ def create_checkout_session(email):
         line_items=[{"price": PRICE_IDS[plan], "quantity": 1}],
         mode=mode,
         customer_email=email,
-        metadata={"plan": plan, "email": email},
+        metadata={"plan": plan, "email": email, "app": APP_NAME},
         success_url=request.host_url + "?checkout=success",
         cancel_url=request.host_url + "?checkout=cancelled",
     )
@@ -438,8 +447,10 @@ def create_checkout_session(email):
         # Checkout Session metadata does NOT automatically propagate to the Charge
         # object a later charge.refunded event carries - only PaymentIntent metadata
         # does. Set it here too so the refund handler below can attribute a refund
-        # back to (plan, email) without an extra API round-trip at refund time.
-        session_kwargs["payment_intent_data"] = {"metadata": {"plan": plan, "email": email}}
+        # back to (plan, email, app) without an extra API round-trip at refund time.
+        session_kwargs["payment_intent_data"] = {
+            "metadata": {"plan": plan, "email": email, "app": APP_NAME}
+        }
 
     session = stripe.checkout.Session.create(**session_kwargs)
     return jsonify({"url": session.url})
@@ -491,19 +502,28 @@ def webhook():
         session = event["data"]["object"]
         metadata = session.get("metadata") or {}
         plan = metadata.get("plan")
+        origin_app = metadata.get("app")
         email = metadata.get("email") or session.get("customer_email")
         customer_id = session.get("customer")
 
-        if email and plan:
-            if plan == "monthly":
-                db.activate_subscription(email, stripe_customer_id=customer_id)
-            elif plan in PLAN_CREDITS:
-                db.add_credits(email, PLAN_CREDITS[plan])
+        if email and plan == "monthly":
+            # All-Access bundle: unlocks all three apps, so this activates here
+            # regardless of which app's checkout the customer actually used -
+            # Stripe delivers this same event to all three apps' webhooks.
+            db.activate_subscription(email, stripe_customer_id=customer_id)
+        elif email and plan in PLAN_CREDITS and origin_app == APP_NAME:
+            # Single/10-pack purchases are per-app. Stripe also delivers this
+            # event to the other two apps' webhooks (same Stripe account), so
+            # only grant credits here if this purchase was actually made on
+            # this app - otherwise a purchase on a sibling app would silently
+            # grant free credits here too.
+            db.add_credits(email, PLAN_CREDITS[plan])
 
     elif event["type"] == "charge.refunded":
         charge = event["data"]["object"]
         metadata = charge.get("metadata") or {}
         plan = metadata.get("plan")
+        origin_app = metadata.get("app")
         email = metadata.get("email")
 
         # Only claw back credits on a FULL refund. A partial refund (a support
@@ -512,7 +532,7 @@ def webhook():
         # are both in cents, straight from Stripe.
         is_full_refund = charge.get("amount_refunded") == charge.get("amount")
 
-        if email and plan in PLAN_CREDITS and is_full_refund:
+        if email and plan in PLAN_CREDITS and origin_app == APP_NAME and is_full_refund:
             db.remove_credits(email, PLAN_CREDITS[plan])
 
     elif event["type"] in ("customer.subscription.deleted", "customer.subscription.paused"):
