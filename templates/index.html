@@ -181,8 +181,17 @@
     position: relative;
     margin: 10px 0 40px;
     border: 1px solid #000;
-    background: var(--paper-raised);
-    border-radius: var(--radius-md);
+    background:
+      linear-gradient(to right, transparent 26px, rgba(161, 61, 44, 0.35) 26px, rgba(161, 61, 44, 0.35) 27px, transparent 27px),
+      linear-gradient(to right, transparent 30px, rgba(161, 61, 44, 0.35) 30px, rgba(161, 61, 44, 0.35) 31px, transparent 31px),
+      repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 25px,
+        rgba(122, 108, 61, 0.28) 26px
+      ),
+      var(--legal-pad-yellow);
+    border-radius: 0;
     overflow: hidden;
   }
 
@@ -216,7 +225,7 @@
   }
 
   .ledger-strip .label-row .label-cell {
-    background: var(--paper-raised);
+    background: transparent;
     color: var(--ink);
     font-weight: 700;
     font-style: normal;
@@ -819,6 +828,11 @@
         <div class="cell before">2026-07-05,11:45:00,PDT,3KM192810C1122334,...,242.50,Payment,Complete</div>
         <div class="arrow">→</div>
         <div class="cell after">07/05/2026,Payment 3KM192810C1122334,242.50</div>
+      </div>
+      <div class="row">
+        <div class="cell before">&nbsp;</div>
+        <div class="arrow"></div>
+        <div class="cell after">&nbsp;</div>
       </div>
     </div>
     <div id="status"></div>
