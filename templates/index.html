@@ -1085,6 +1085,20 @@
     showEmailEntry();
   }
 
+  // Stripe redirects back here with ?checkout=success/cancelled after checkout - acknowledge it
+  // instead of silently dropping the visitor back on the same page with no indication either way.
+  const checkoutParam = new URLSearchParams(window.location.search).get('checkout');
+  if (checkoutParam === 'success') {
+    checkoutStatus.textContent = "Payment received! If your subscriber perks below don't show up right away, give it a few seconds — we're confirming with Stripe.";
+    checkoutStatus.style.color = 'var(--ledger-green)';
+    // The webhook that actually activates the account can land a second or two after this
+    // redirect - retry the balance check once shortly after in case the first one was too early.
+    setTimeout(refreshBalance, 3000);
+  } else if (checkoutParam === 'cancelled') {
+    checkoutStatus.textContent = 'Checkout cancelled — no charge was made.';
+    checkoutStatus.style.color = 'var(--ink-soft)';
+  }
+
   sendCodeBtn.addEventListener('click', async () => {
     const email = emailInput.value.trim();
     if (!email || !email.includes('@')) {
