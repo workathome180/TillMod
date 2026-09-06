@@ -62,7 +62,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
 
 import db
-from transform import ConversionError, convert_square_to_qbo
+from transform import ConversionError, convert_square_to_qbo, convert_square_to_detail_csv
 
 app = Flask(__name__)
 # Render/Railway/Fly.io (the hosts this README recommends) all sit one reverse proxy in
@@ -103,19 +103,26 @@ if STRIPE_SECRET_KEY:
 PRICE_IDS = {
     "single": os.environ.get("STRIPE_PRICE_SINGLE", "price_REPLACE_ME_SINGLE"),
     "pack10": os.environ.get("STRIPE_PRICE_PACK10", "price_REPLACE_ME_PACK10"),
+    "monthly_single": os.environ.get("STRIPE_PRICE_MONTHLY_SINGLE", "price_REPLACE_ME_MONTHLY_SINGLE"),
     "monthly": os.environ.get("STRIPE_PRICE_MONTHLY", "price_REPLACE_ME_MONTHLY"),
+    "monthly_all4": os.environ.get("STRIPE_PRICE_MONTHLY_ALL4", "price_REPLACE_ME_MONTHLY_ALL4"),
 }
 
-# Identifies which app a checkout came from. FileMod/ShopMod/TillMod all share one
-# Stripe account, so Stripe broadcasts every webhook event to all three apps'
-# /webhook endpoints, not just the one that created the checkout - this tag is how
-# the webhook below tells "a single/10-pack purchase made on this app" apart from
-# "the same kind of purchase made on a sibling app." The "monthly" plan is the one
-# exception: it's the shared All-Access bundle, so it's meant to activate on all
-# three regardless of which app's checkout the customer used.
+# Identifies which app a checkout came from. FileMod/ShopMod/TillMod/PayMod all
+# share one Stripe account, so Stripe broadcasts every webhook event to all four
+# apps' /webhook endpoints, not just the one that created the checkout - this tag
+# is how the webhook below tells "a single/10-pack/monthly_single purchase made on
+# this app" apart from "the same kind of purchase made on a sibling app." Two
+# plans are broadcast exceptions, meant to activate regardless of which app's
+# checkout the customer used: "monthly" is the All-Access bundle (PayPal +
+# Shopify + Square only, NOT PayMod/Gusto - that has its own standalone
+# "monthly_gusto" tier on PayMod), and "monthly_all4" is the bigger bundle that
+# adds Gusto on top, so it activates on all four apps. "monthly_single" is the
+# cheaper single-platform-only subscription tier - same broadcast problem as
+# single/pack10, so it's gated by origin_app too.
 APP_NAME = "tillmod"
 
-PLAN_CREDITS = {"single": 1, "pack10": 10}  # monthly grants a subscription, not credits
+PLAN_CREDITS = {"single": 1, "pack10": 10}  # monthly/monthly_single grant a subscription, not credits
 
 # A free perk for active monthly subscribers, gated in /gift-workbook below by the same
 # has_subscription() check /account uses. Lives in its own folder (not app.static_folder),
@@ -421,6 +428,46 @@ def convert(email):
     return response
 
 
+@app.route("/convert-detail", methods=["POST"])
+@rate_limit(max_requests=10, per_seconds=60)
+@verified_email_required
+def convert_detail(email):
+    """Reconciliation companion CSV (Date, Description, Gross Sales, Fees,
+    Net Total + a TOTAL row) - a free perk for active monthly subscribers,
+    not a credited conversion. Not meant for QBO import; lets a subscriber
+    see what each Net Total figure was made of without reopening Square.
+    """
+    if not db.has_subscription(email):
+        return jsonify({"error": "This download is available to active monthly subscribers."}), 403
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded."}), 400
+
+    uploaded = request.files["file"]
+    if uploaded.filename == "":
+        return jsonify({"error": "No file selected."}), 400
+
+    file_bytes = uploaded.read()
+
+    try:
+        csv_text, warnings = convert_square_to_detail_csv(file_bytes)
+    except ConversionError as e:
+        return jsonify({"error": str(e)}), 422
+
+    buf = io.BytesIO(csv_text.encode("utf-8"))
+    buf.seek(0)
+
+    response = send_file(
+        buf,
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name="square_detail_audit.csv",
+    )
+    if warnings:
+        response.headers["X-Conversion-Warnings"] = " | ".join(warnings)
+    return response
+
+
 @app.route("/create-checkout-session", methods=["POST"])
 @verified_email_required
 def create_checkout_session(email):
@@ -433,7 +480,7 @@ def create_checkout_session(email):
     if plan not in PRICE_IDS:
         return jsonify({"error": "Unknown plan."}), 400
 
-    mode = "subscription" if plan == "monthly" else "payment"
+    mode = "subscription" if plan in ("monthly", "monthly_single", "monthly_all4") else "payment"
 
     session_kwargs = dict(
         line_items=[{"price": PRICE_IDS[plan], "quantity": 1}],
@@ -507,9 +554,19 @@ def webhook():
         customer_id = session.get("customer")
 
         if email and plan == "monthly":
-            # All-Access bundle: unlocks all three apps, so this activates here
-            # regardless of which app's checkout the customer actually used -
+            # All-Access bundle: unlocks all three conversion apps (not PayMod -
+            # Gusto is its own separate "monthly_gusto" tier), so this activates
+            # here regardless of which app's checkout the customer actually used -
             # Stripe delivers this same event to all three apps' webhooks.
+            db.activate_subscription(email, stripe_customer_id=customer_id)
+        elif email and plan == "monthly_all4":
+            # Bigger bundle: unlocks all four apps including Gusto, so this
+            # activates here regardless of which app's checkout the customer
+            # actually used - same broadcast reasoning as "monthly" above.
+            db.activate_subscription(email, stripe_customer_id=customer_id)
+        elif email and plan == "monthly_single" and origin_app == APP_NAME:
+            # Single-platform-only subscription - same broadcast problem as
+            # single/pack10 below, so it's gated by origin_app too.
             db.activate_subscription(email, stripe_customer_id=customer_id)
         elif email and plan in PLAN_CREDITS and origin_app == APP_NAME:
             # Single/10-pack purchases are per-app. Stripe also delivers this

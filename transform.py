@@ -167,3 +167,82 @@ def convert_square_to_qbo(file_bytes: bytes) -> tuple[str, list[str]]:
         )
 
     return csv_text, warnings
+
+
+def convert_square_to_detail_csv(file_bytes: bytes) -> tuple[str, list[str]]:
+    """
+    Build a reconciliation companion CSV (Date, Description, Gross Sales,
+    Fees, Net Total) from the same Square export, for monthly subscribers -
+    not meant for QBO import. Restores the Gross/Fee breakdown that
+    convert_square_to_qbo() collapses into a single Net Total figure, so a
+    bookkeeper doesn't have to reopen Square to see what a Net figure was
+    made of.
+
+    Returns (csv_text, warnings). Raises ConversionError on fatal problems.
+    """
+    warnings: list[str] = []
+
+    try:
+        text = file_bytes.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        try:
+            text = file_bytes.decode("latin-1")
+            warnings.append(
+                "File was not UTF-8; re-encoded from Latin-1. Verify special "
+                "characters in transaction details look correct."
+            )
+        except UnicodeDecodeError as e:
+            raise ConversionError(f"Could not decode file as text: {e}")
+
+    reader = csv.DictReader(io.StringIO(text))
+    if reader.fieldnames is None:
+        raise ConversionError("File appears to be empty or not a valid CSV.")
+
+    required = {"Date", "Gross Sales", "Fees", "Net Total"}
+    header_set = set(reader.fieldnames)
+    missing = required - header_set
+    if missing:
+        raise ConversionError(
+            f"Missing required Square columns: {', '.join(sorted(missing))}. "
+            f"Found columns: {', '.join(reader.fieldnames)}"
+        )
+
+    has_event_type = "Event Type" in header_set
+    has_txn_id = "Transaction ID" in header_set
+
+    rows_out = []
+    gross_total = fee_total = net_total = 0.0
+    for i, row in enumerate(reader, start=2):  # start=2: row 1 is the header
+        try:
+            date = _parse_square_date(row["Date"])
+        except ConversionError as e:
+            warnings.append(f"Row {i}: skipped ({e})")
+            continue
+
+        try:
+            gross = _parse_amount(row["Gross Sales"])
+            fee = _parse_amount(row["Fees"])
+            net = _parse_amount(row["Net Total"])
+        except ConversionError as e:
+            warnings.append(f"Row {i}: skipped ({e})")
+            continue
+
+        event_type = row.get("Event Type", "") if has_event_type else ""
+        transaction_id = row.get("Transaction ID", "") if has_txn_id else ""
+        description = _sanitize_description(event_type, transaction_id)
+
+        rows_out.append([date, description, f"{gross:.2f}", f"{fee:.2f}", f"{net:.2f}"])
+        gross_total += gross
+        fee_total += fee
+        net_total += net
+
+    if not rows_out:
+        raise ConversionError("No valid transactions found after parsing.")
+
+    out_buf = io.StringIO()
+    writer = csv.writer(out_buf, lineterminator="\r\n")
+    writer.writerow(["Date", "Description", "Gross Sales", "Fees", "Net Total"])
+    writer.writerows(rows_out)
+    writer.writerow(["", "TOTAL", f"{gross_total:.2f}", f"{fee_total:.2f}", f"{net_total:.2f}"])
+
+    return out_buf.getvalue(), warnings

@@ -616,7 +616,7 @@
 
   .pricing-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     grid-template-rows: auto auto auto auto auto auto;
     gap: 20px;
   }
@@ -764,14 +764,31 @@
         <button class="buy-btn" data-plan="pack10">Buy</button>
       </div>
       <div class="tally-row">
+        <div class="plan-name">Square Monthly<span class="footnote-star">*</span></div>
+        <div class="plan-desc">Unlimited Square conversions, this platform only</div>
+        <div class="price">$39<span style="font-size:14px;">/mo</span></div>
+        <button class="buy-btn" data-plan="monthly_single">Subscribe</button>
+        <div style="font-size:11px; margin-top:6px; opacity:0.75;">Renews monthly · cancel anytime</div>
+        <div style="font-size:11px; margin-top:4px;"><span class="footnote-star">*</span>Get a free ledger and categorization workbook for Square when you subscribe</div>
+      </div>
+      <div class="tally-row">
         <div class="plan-name">All-Access Monthly<span class="footnote-star">*</span></div>
         <div class="plan-desc">Unlimited PayPal, Shopify &amp; Square conversions</div>
         <div class="price">$99<span style="font-size:14px;">/mo</span></div>
         <button class="buy-btn" data-plan="monthly">Subscribe</button>
         <div style="font-size:11px; margin-top:6px; opacity:0.75;">Renews monthly · cancel anytime</div>
-        <div style="font-size:11px; margin-top:4px;"><span class="footnote-star">*</span>Get a free ledger and categorization workbook for PayPal, Shopify, Square, and Payroll when you subscribe</div>
+        <div style="font-size:11px; margin-top:4px;"><span class="footnote-star">*</span>Get a free ledger and categorization workbook for PayPal, Shopify &amp; Square when you subscribe</div>
+      </div>
+      <div class="tally-row">
+        <div class="plan-name">All-Access + Gusto<span class="footnote-star">*</span></div>
+        <div class="plan-desc">Unlimited PayPal, Shopify, Square &amp; Payroll conversions — Gusto's free</div>
+        <div class="price">$129<span style="font-size:14px;">/mo</span></div>
+        <button class="buy-btn" data-plan="monthly_all4">Subscribe</button>
+        <div style="font-size:11px; margin-top:6px; opacity:0.75;">Renews monthly · cancel anytime</div>
+        <div style="font-size:11px; margin-top:4px;"><span class="footnote-star">*</span>Get a free ledger and categorization workbook for all four platforms when you subscribe</div>
       </div>
     </div>
+    <div style="font-size:12px; margin-top:12px; text-align:center; opacity:0.75;">Only need Gusto payroll? PayMod's Gusto Monthly ($59/mo) is a standalone plan.</div>
     <div id="checkout-status" style="font-size:13px; margin-top:16px; text-align:center;"></div>
   </div>
 
@@ -842,6 +859,7 @@
     </div>
     <div id="status"></div>
     <div id="warnings"></div>
+    <a id="detail-link" href="#" style="display:none; font-size:12px;">Download detail/audit CSV (Gross &amp; Fee breakdown)</a>
   </form>
 
   <footer class="spec-note">
@@ -874,6 +892,7 @@
   const checkoutStatus = document.getElementById('checkout-status');
   const manageSubLink = document.getElementById('manage-sub-link');
   const giftLink = document.getElementById('gift-link');
+  const detailLink = document.getElementById('detail-link');
 
   const sendCodeBtn = document.getElementById('send-code-btn');
   const codeRow = document.getElementById('code-row');
@@ -888,6 +907,7 @@
   const postVerifySection = document.getElementById('post-verify-section');
 
   let selectedFile = null;
+  let isSubscriber = false;
   let pendingReceipt = null;
 
   // --- Email verification -----------------------------------------------------
@@ -930,6 +950,8 @@
     balanceNote.textContent = '';
     manageSubLink.style.display = 'none';
     giftLink.style.display = 'none';
+    detailLink.style.display = 'none';
+    isSubscriber = false;
   }
 
   function showCodeEntry() {
@@ -945,6 +967,7 @@
       if (res.status === 401) { handleUnverified(); return; }
       if (!res.ok) return;
       const data = await res.json();
+      isSubscriber = !!data.subscription_active;
       if (data.subscription_active) {
         balanceNote.textContent = '(unlimited — active subscription)';
         manageSubLink.style.display = '';
@@ -953,6 +976,7 @@
         balanceNote.textContent = `(${data.credits} credit${data.credits === 1 ? '' : 's'} available)`;
         manageSubLink.style.display = 'none';
         giftLink.style.display = 'none';
+        detailLink.style.display = 'none';
       }
     } catch (e) { /* silent — balance display is a nicety, not critical */ }
   }
@@ -1007,6 +1031,37 @@
       checkoutStatus.style.color = 'var(--stamp-red)';
     } finally {
       giftLink.textContent = 'Download free gift';
+    }
+  });
+
+  detailLink.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (!getToken() || !selectedFile) return;
+    detailLink.textContent = 'Loading…';
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      const res = await fetch('/convert-detail', { method: 'POST', headers: authHeaders(), body: formData });
+      if (res.status === 401) { handleUnverified(); return; }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        statusEl.textContent = 'Error: ' + (err.error || 'Could not build detail CSV.');
+        statusEl.className = 'error';
+        return;
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'square_detail_audit.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      statusEl.textContent = 'Something went wrong: ' + err.message;
+      statusEl.className = 'error';
+    } finally {
+      detailLink.textContent = 'Download detail/audit CSV (Gross & Fee breakdown)';
     }
   });
 
@@ -1257,6 +1312,7 @@
         ? 'Converted using your free trial credit. Download started.'
         : 'Converted. Download started — import it into the QBO Banking tab.';
       statusEl.className = 'success';
+      detailLink.style.display = isSubscriber ? '' : 'none';
       refreshBalance();
     } catch (err) {
       statusEl.textContent = 'Something went wrong: ' + err.message;
